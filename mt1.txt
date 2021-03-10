@@ -1,0 +1,55 @@
+Tree
+f=g
+SBACDB
+f=g+h
+SBDG
+
+Min-max
+9
+9	4
+9	10	11	10	4	13
+Pruning: FKL
+
+MDP
+x = direction, y = left, z = right
+(0.8x + 0.1y + 0.1z)0.9
+Q(up): x=0.85,y=0.57,z=-1
+0.57
+Q(down): x=0.48,y=0.57,z=-1
+0.31
+Q(left): x=0.57,y=0.48,z=0.85
+0.53
+Q(right): x=-1,y=0.85,0.48
+-0.6
+Optimal: up
+
+Probability
+cold and riany: 0.35
+sunny or hot: 0.65
+
+P(T) and P(W)
+hot: 0.2
+cold: 0.8
+sun: 0.5
+cold: 0.5
+
+P(T|W = sun)
+hot: 0.1
+cold: 0.9
+P(T|W=rain)
+hot: 0.3
+cold: 0.7
+
+
+V0
+A-J in order
+0
+0
+0
+2
+1
+0
+3.2
+2.2
+0
+Slow
