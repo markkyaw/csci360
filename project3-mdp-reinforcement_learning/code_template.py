@@ -154,6 +154,11 @@ def policy_evaluation(policy, env, gamma=0.95, theta=0.0001): # Do not change ar
 
         if delta < theta:
             break
+
+    policy_stable = True
+    for s in range(nS):
+        old_action = policy[s]
+
     #==========================================
     return V # Do not change
 
@@ -197,6 +202,34 @@ def policy_iteration(env, gamma=0.95, theta=0.0001):  # do not change arguments
 
     #==========================================
     "*** YOUR CODE HERE FOR POLICY ITERATION***"
+    while True:
+        # Policy Evaluation
+        V = policy_evaluation(policy, env, gamma, theta)
+
+        # Policy Improvement
+        policy_stable = True
+        for s in range(nS):
+            values = []
+            old_action = np.argwhere(policy[s] == np.max(policy[s])).flatten()
+            policy[s] = np.zeros(1)
+            # get the max values
+            for action in range(nA):
+                val = 0
+                # envP[state][action] = [prob, next_state, reward, is_terminal]
+                for prob, next_state, reward, terminal in envP[s][action]:
+                    val += prob * (reward + gamma * V[next_state])
+                values.append(val)
+
+            best_action = np.argwhere(values == np.max(values)).flatten()
+
+            for index in best_action:
+                policy[s][index] = 1 / len(best_action)
+
+            if not np.array_equal(old_action, best_action):
+                policy_stable = False
+
+        if policy_stable:
+            break
 
     #==========================================
     return policy  # Do not change
@@ -264,6 +297,21 @@ def q_learning_1(env, alpha=0.5, gamma=0.95, epsilon=0.5, num_episodes=500):
     #==========================================
     "*** YOUR CODE HERE FOR Q-LEARNING VERSION 1***"
     #### ======= Vanilla epsilon-greedy
+    S = env.reset()
+    print(S)
+    # for episode in num_episodes:
+    #     S = env.reset()
+    #     # Repeat for each step of episode:
+    #     # Choose A from S using policy derived from Q
+    #     p = np.random.rand()
+    #     if p < epsilon:
+    #         # take random action
+    #         pass
+    #     else:
+    #         # take current best action
+    #         pass
+
+        # Take action A, observe R, S'
 
     #==========================================
     return Q, policy  # do not change
