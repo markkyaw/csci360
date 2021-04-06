@@ -137,7 +137,23 @@ def policy_evaluation(policy, env, gamma=0.95, theta=0.0001): # Do not change ar
 
     #==========================================
     "*** YOUR CODE HERE FOR POLICY EVALUATION***"
+    while True:
+        delta = 0
+        for s in range(nS):
+            v = V[s]
+            total_val = 0
+            for action in range(nA):
+                val = 0
+                # envP[state][action] = [prob, next_state, reward, is_terminal]
+                for prob, next_state, reward, terminal in envP[s][action]:
+                    val += prob * (reward + gamma * V[next_state])
 
+                total_val += policy[s][action] * val
+            V[s] = total_val
+            delta = max(delta, abs(v - V[s]))
+
+        if delta < theta:
+            break
     #==========================================
     return V # Do not change
 
