@@ -62,21 +62,20 @@ def value_iteration(env, gamma=0.95, theta=0.0001): # Do not change arguments
     # Calculate V with max value for each action
     while True:
         delta = 0
-        for s in range(nS):
-            v = V[s]
+        for state in range(nS):
+            v = V[state]
             max_val = float("-inf")
             for action in range(nA):
                 val = 0
                 # envP[state][action] = [prob, next_state, reward, is_terminal]
-                for prob, next_state, reward, terminal in envP[s][action]:
+                for prob, next_state, reward, terminal in envP[state][action]:
                     val += prob * (reward + gamma * V[next_state])
 
-                if max_val < val:
-                    max_val = val
+                max_val = max(max_val, val)
 
             # Get the max action for current state
-            V[s] = max_val
-            delta = max(delta, abs(v - V[s]))
+            V[state] = max_val
+            delta = max(delta, abs(v - V[state]))
 
         if delta < theta:
             break
@@ -89,26 +88,26 @@ def value_iteration(env, gamma=0.95, theta=0.0001): # Do not change arguments
 
     # 1) calculate values
     # 2) find ALL argmax(values) (using argwhere with flatten)
-    # 3) policy[s] = np.zeros(nA)
-    # 4) for index in best_action: policy[s][index] = 1 / len(best_action) (solve the tie issue)
+    # 3) policy[state] = np.zeros(nA)
+    # 4) for index in best_action: policy[state][index] = 1 / len(best_action) (solve the tie issue)
 
     # Calculate policy based on V
-    for s in range(nS):
+    for state in range(nS):
         values = []
-        # reset policy[s]
-        policy[s] = np.zeros(1)
+        # reset policy[state]
+        policy[state] = np.zeros(1)
         # get the max values
         for action in range(nA):
             val = 0
             # envP[state][action] = [prob, next_state, reward, is_terminal]
-            for prob, next_state, reward, terminal in envP[s][action]:
+            for prob, next_state, reward, terminal in envP[state][action]:
                 val += prob * (reward + gamma * V[next_state])
             values.append(val)
 
         best_action = np.argwhere(values == np.max(values)).flatten()
 
         for index in best_action:
-            policy[s][index] = 1 / len(best_action)
+            policy[state][index] = 1 / len(best_action)
 
     #==========================================
     return policy  # Do not change
@@ -139,25 +138,21 @@ def policy_evaluation(policy, env, gamma=0.95, theta=0.0001): # Do not change ar
     "*** YOUR CODE HERE FOR POLICY EVALUATION***"
     while True:
         delta = 0
-        for s in range(nS):
-            v = V[s]
+        for state in range(nS):
+            v = V[state]
             total_val = 0
             for action in range(nA):
                 val = 0
                 # envP[state][action] = [prob, next_state, reward, is_terminal]
-                for prob, next_state, reward, terminal in envP[s][action]:
+                for prob, next_state, reward, terminal in envP[state][action]:
                     val += prob * (reward + gamma * V[next_state])
 
-                total_val += policy[s][action] * val
-            V[s] = total_val
-            delta = max(delta, abs(v - V[s]))
+                total_val += policy[state][action] * val
+            V[state] = total_val
+            delta = max(delta, abs(v - V[state]))
 
         if delta < theta:
             break
-
-    policy_stable = True
-    for s in range(nS):
-        old_action = policy[s]
 
     #==========================================
     return V # Do not change
@@ -208,22 +203,22 @@ def policy_iteration(env, gamma=0.95, theta=0.0001):  # do not change arguments
 
         # Policy Improvement
         policy_stable = True
-        for s in range(nS):
+        for state in range(nS):
             values = []
-            old_action = np.argwhere(policy[s] == np.max(policy[s])).flatten()
-            policy[s] = np.zeros(1)
+            old_action = np.argwhere(policy[state] == np.max(policy[state])).flatten()
+            policy[state] = np.zeros(1)
             # get the max values
             for action in range(nA):
                 val = 0
                 # envP[state][action] = [prob, next_state, reward, is_terminal]
-                for prob, next_state, reward, terminal in envP[s][action]:
+                for prob, next_state, reward, terminal in envP[state][action]:
                     val += prob * (reward + gamma * V[next_state])
                 values.append(val)
 
             best_action = np.argwhere(values == np.max(values)).flatten()
 
             for index in best_action:
-                policy[s][index] = 1 / len(best_action)
+                policy[state][index] = 1 / len(best_action)
 
             if not np.array_equal(old_action, best_action):
                 policy_stable = False
@@ -297,21 +292,44 @@ def q_learning_1(env, alpha=0.5, gamma=0.95, epsilon=0.5, num_episodes=500):
     #==========================================
     "*** YOUR CODE HERE FOR Q-LEARNING VERSION 1***"
     #### ======= Vanilla epsilon-greedy
-    S = env.reset()
-    print(S)
-    # for episode in num_episodes:
-    #     S = env.reset()
-    #     # Repeat for each step of episode:
-    #     # Choose A from S using policy derived from Q
-    #     p = np.random.rand()
-    #     if p < epsilon:
-    #         # take random action
-    #         pass
-    #     else:
-    #         # take current best action
-    #         pass
+    for episode in range(num_episodes):
+        S = env.reset()
+        is_terminal = False
+        # Repeat until S is terminal
+        while not is_terminal:
+            # Choose A from S using policy derived from Q
+            p = np.random.rand()
+            observation, reward, done, info = 0, 0, 0, 0
+            A = 0
+            if p < epsilon:
+                # take random action
+                A = np.random.choice(nA)
+                # Take action A, observe R, S'
+                observation, reward, done, info = env.step(A)
+            else:
+                # take current best action
+                A = np.argmax(Q[S])
+                # Take action A, observe R, S'
+                observation, reward, done, info = env.step(A)
 
-        # Take action A, observe R, S'
+            max_award = float('-inf')
+            for a in range(nA):
+                max_award = max(max_award, Q[observation][a])
+            Q[S][A] += alpha * (reward + gamma * max_award - Q[S][A])
+
+            # S = S'
+            S = observation
+            is_terminal = done
+
+    # Update policy
+    for state in range(nS):
+        # Only update policy is Q[state] is 0
+        if not np.array_equal(Q[state], np.zeros(nA)):
+            # reset policy to 0
+            policy[state] = np.zeros(nA)
+            # get the index to update
+            best_action = np.argmax(Q[state])
+            policy[state][best_action] = 1
 
     #==========================================
     return Q, policy  # do not change
@@ -383,7 +401,47 @@ def q_learning_2(env, alpha=0.5, gamma=0.95, epsilon_0=1.0, epsilon_min=0.01, La
     #==========================================
     "*** YOUR CODE HERE FOR Q-LEARNING VERSION 2***"
     #### ======= Decay threshold version epsilon-greedy
+    for episode in range(num_episodes):
+        S = env.reset()
+        is_terminal = False
+        # Repeat until S is terminal
+        while not is_terminal:
+            # Choose A from S using policy derived from Q
+            # epsilon(t) = epsilon_0 * e^(-lambda * t)
+            # taking max to set epsilon if it drops below epsilon_min
+            epsilon = max(epsilon_0 * np.exp(-1 * Lambda * episode), epsilon_min)
+            p = np.random.rand()
+            observation, reward, done, info = 0, 0, 0, 0
+            A = 0
+            if p < epsilon:
+                # take random action
+                A = np.random.choice(nA)
+                # Take action A, observe R, S'
+                observation, reward, done, info = env.step(A)
+            else:
+                # take current best action
+                A = np.argmax(Q[S])
+                # Take action A, observe R, S'
+                observation, reward, done, info = env.step(A)
 
+            max_award = float('-inf')
+            for a in range(nA):
+                max_award = max(max_award, Q[observation][a])
+            Q[S][A] += alpha * (reward + gamma * max_award - Q[S][A])
+
+            # S = S'
+            S = observation
+            is_terminal = done
+
+    # Update policy
+    for state in range(nS):
+        # Only update policy is Q[state] is 0
+        if not np.array_equal(Q[state], np.zeros(nA)):
+            # reset policy to 0
+            policy[state] = np.zeros(nA)
+            # get the index to update
+            best_action = np.argmax(Q[state])
+            policy[state][best_action] = 1
     ## ========================================
     return Q, policy  # do not change
 
@@ -451,7 +509,44 @@ def q_learning_3(env, alpha=0.5, gamma=0.95, epsilon=0.5, num_episodes=500):
     #==========================================
     "*** YOUR CODE HERE FOR Q-LEARNING VERSION 3***"
     ##### ===== Effective exploiting epsilon-greedy q-learning
+    for episode in range(num_episodes):
+        S = env.reset()
+        is_terminal = False
+        # Repeat until S is terminal
+        while not is_terminal:
+            # Choose A from S using policy derived from Q
+            p = np.random.rand()
+            observation, reward, done, info = 0, 0, 0, 0
+            A = 0
+            if p > epsilon and not np.array_equal(Q[S], np.zeros(nA)):
+                # take current best action only if Q[S] is not all zeros and sampling is above threshold
+                A = np.argmax(Q[S])
+                # Take action A, observe R, S'
+                observation, reward, done, info = env.step(A)
+            else:
+                # take random action
+                A = np.random.choice(nA)
+                # Take action A, observe R, S'
+                observation, reward, done, info = env.step(A)
 
+            max_award = float('-inf')
+            for a in range(nA):
+                max_award = max(max_award, Q[observation][a])
+            Q[S][A] += alpha * (reward + gamma * max_award - Q[S][A])
+
+            # S = S'
+            S = observation
+            is_terminal = done
+
+    # Update policy
+    for state in range(nS):
+        # Only update policy is Q[state] is 0
+        if not np.array_equal(Q[state], np.zeros(nA)):
+            # reset policy to 0
+            policy[state] = np.zeros(nA)
+            # get the index to update
+            best_action = np.argmax(Q[state])
+            policy[state][best_action] = 1
     #==========================================
     return Q, policy  # do not change
 
