@@ -566,6 +566,10 @@ def q_learning_cart(env, alpha=0.5, gamma=0.95, epsilon=0.5, num_episodes=9000):
     ''' Performs Q-learning for the CartPole environment
 
     :param env: Unwrapped Open AI environment
+    :param alpha: Learning rate
+    :param gamma: Discount factor
+    :param epsilon: Epsilon in epsilon-greedy method
+    :param num_episodes: Number of episodes to use for learning
     :return: Q table
     '''
 
