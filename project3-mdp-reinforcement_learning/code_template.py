@@ -562,7 +562,7 @@ def get_discrete_state(state):  # Do not change this function
     return tuple(discrete_state.astype(np.int))
 
 
-def q_learning_cart(env):  # add your own arguments based on your implementation
+def q_learning_cart(env, alpha=0.5, gamma=0.95, epsilon=0.5, num_episodes=9000):  # add your own arguments based on your implementation
     ''' Performs Q-learning for the CartPole environment
 
     :param env: Unwrapped Open AI environment
@@ -578,7 +578,37 @@ def q_learning_cart(env):  # add your own arguments based on your implementation
 
     #==========================================
     "*** YOUR CODE HERE FOR Q-LEARNING FOR CARTPOLE***"
+    # Used q_learning_3 for this
+    for episode in range(num_episodes):
+        S = env.reset()
+        S = get_discrete_state(S)
+        is_terminal = False
+        # Repeat until S is terminal
+        while not is_terminal:
+            # Choose A from S using policy derived from Q
+            p = np.random.rand()
+            observation, reward, done, info = 0, 0, 0, 0
+            A = 0
+            if p > epsilon and not np.array_equal(Q[S], np.zeros(nA)):
+                # take current best action only if Q[S] is not all zeros and sampling is above threshold
+                A = np.argmax(Q[S])
+                # Take action A, observe R, S'
+                observation, reward, done, info = env.step(A)
+            else:
+                # take random action
+                A = np.random.choice(nA)
+                # Take action A, observe R, S'
+                observation, reward, done, info = env.step(A)
 
+            observation = get_discrete_state(observation)
+            max_award = float('-inf')
+            for a in range(nA):
+                max_award = max(max_award, Q[observation][a])
+            Q[S][A] += alpha * (reward + gamma * max_award - Q[S][A])
+
+            # S = S'
+            S = observation
+            is_terminal = done
     ## ========================================
     return Q  # do not change
 
@@ -666,15 +696,18 @@ if __name__ == "__main__":
         q_table, policy = q_learning_1(env)
         print('\n q_table from q-learning version 1:\n', q_table)
         print('\n policy from q-learning version 1:\n', policy)
+        # print(compare_policies((value_iteration(env)), policy))
 
     if args.question == '4-2':
         print("Test task 4 - q-learning version 2")
         q_table, policy = q_learning_2(env)
         print('\n q_table from q-learning version 2:\n', q_table)
         print('\n policy from q-learning version 2:\n', policy)
+        # print(compare_policies(value_iteration(env), policy))
 
     if args.question == '4-3':
         print("Test task 4 - q-learning version 3")
         q_table, policy = q_learning_3(env)
         print('\n q_table from q-learning version 3:\n', q_table)
         print('\n policy from q-learning version 3:\n', policy)
+        # print(compare_policies(value_iteration(env), policy))
